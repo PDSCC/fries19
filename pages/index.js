@@ -1,88 +1,101 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
-import Nav from '../components/nav'
 
-const Home = () => (
-  <div>
+import Card from '../components/card'
+
+import firebase from 'firebase/app'
+import 'firebase/firestore'
+
+import firebaseConfig from 'secret.js'
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+let db = firebase.firestore()
+
+const Main = () => {
+  const [now, setNow] = useState(0);
+  const [own, setOwn] = useState(0);
+
+  useEffect(() => {
+    setOwn(localStorage.getItem("count"))
+  })
+
+  useEffect(() => {
+    db.collection("value").doc("queue").get().then(
+      docs => { 
+        if(!localStorage.getItem("count")) {
+        let now = docs.data().now
+        localStorage.setItem("count", now)
+        setNow(now)
+        db.collection("value").doc("queue").update({
+            now: now + 1
+        })
+      }
+    })
+  })
+
+  const resetFunc = () => {
+    if (confirm("นี่ไม่ใช่การ Refresh แต่คือการ Reset ข้อมูล จะทำต่อหรือไม่")) {
+      db.collection("value").doc("queue").get().then(
+        docs => { 
+          let now = docs.data().now
+          localStorage.setItem("count", now)
+          setNow(now)
+          db.collection("value").doc("queue").update({
+              now: now + 1
+          })
+      })
+    }
+  }
+
+  return <>
     <Head>
-      <title>Home</title>
+      <title>Fries</title>
       <link rel="icon" href="/favicon.ico" />
+      <link href="https://fonts.googleapis.com/css?family=Kanit&display=swap" rel="stylesheet"></link>
     </Head>
-
-    <Nav />
-
-    <div className="hero">
-      <h1 className="title">Welcome to Next.js!</h1>
-      <p className="description">
-        To get started, edit <code>pages/index.js</code> and save to reload.
-      </p>
-
-      <div className="row">
-        <a href="https://nextjs.org/docs" className="card">
-          <h3>Documentation &rarr;</h3>
-          <p>Learn more about Next.js in the documentation.</p>
-        </a>
-        <a href="https://nextjs.org/learn" className="card">
-          <h3>Next.js Learn &rarr;</h3>
-          <p>Learn about Next.js by following an interactive tutorial!</p>
-        </a>
-        <a
-          href="https://github.com/zeit/next.js/tree/master/examples"
-          className="card"
-        >
-          <h3>Examples &rarr;</h3>
-          <p>Find other example boilerplates on the Next.js GitHub.</p>
-        </a>
+    <div id="outerContainer">
+      <div id="container">
+        <h3>Fries by Computer Club</h3>
+        <Card now={now} own={own}/>
       </div>
+
+      <button onClick={resetFunc}>Reset Data</button>
     </div>
-
     <style jsx>{`
-      .hero {
-        width: 100%;
-        color: #333;
-      }
-      .title {
+      :global(body) {
         margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, Avenir Next, Avenir,
+        Helvetica, sans-serif;
+        height: 100vh;
         width: 100%;
-        padding-top: 80px;
-        line-height: 1.15;
-        font-size: 48px;
+        background: linear-gradient(-45deg, #F8CDDA, #1D2B64);
       }
-      .title,
-      .description {
-        text-align: center;
-      }
-      .row {
-        max-width: 880px;
-        margin: 80px auto 40px;
+      #outerContainer {
         display: flex;
-        flex-direction: row;
-        justify-content: space-around;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
       }
-      .card {
-        padding: 18px 18px 24px;
-        width: 220px;
-        text-align: left;
-        text-decoration: none;
-        color: #434343;
-        border: 1px solid #9b9b9b;
+      h3 {
+        color: #eeeeee;
+        text-align: center;
+        font-weight: 500;
       }
-      .card:hover {
-        border-color: #067df7;
+      button { 
+        margin-top: 20vh;
+        width: 20vw;
+        height: 5vh;
+        background: #ca3433;
+        border-radius: 10px;
+        border: 0;
+        color: white;
+        box-shadow: 10px 10px 15px -2px rgba(0,0,0,0.1);
       }
-      .card h3 {
-        margin: 0;
-        color: #067df7;
-        font-size: 18px;
-      }
-      .card p {
-        margin: 0;
-        padding: 12px 0 0;
-        font-size: 13px;
-        color: #333;
-      }
-    `}</style>
-  </div>
-)
+      `}</style>
+  </>
+}
 
-export default Home
+export default Main
